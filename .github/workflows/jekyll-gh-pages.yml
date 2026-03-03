@@ -1,0 +1,51 @@
+# ตัวอย่างเวิร์กโฟลว์สำหรับการสร้างและปรับใช้เว็บไซต์ Jekyll ไปยัง GitHub Pages
+ชื่อ: ปรับใช้ Jekyll ด้วยการติดตั้ง dependencies ของ GitHub Pages ไว้ล่วงหน้า
+
+บน:
+# รันเมื่อมีการ push ไปยัง branch เริ่มต้น
+push:
+branches: ["production"]
+
+# อนุญาตให้คุณรันเวิร์กโฟลว์นี้ด้วยตนเองจากแท็บ Actions
+workflow_dispatch:
+
+# ตั้งค่าสิทธิ์ของ GITHUB_TOKEN เพื่ออนุญาตการปรับใช้ไปยัง GitHub Pages
+permissions:
+contents: read
+pages: write
+id-token: write
+
+# อนุญาตให้ปรับใช้พร้อมกันเพียงครั้งเดียว ข้ามการเรียกใช้ที่อยู่ในคิวระหว่างการเรียกใช้ที่กำลังดำเนินการและรายการล่าสุดที่อยู่ในคิว
+# อย่างไรก็ตาม ห้ามยกเลิกการทำงานที่กำลังดำเนินการอยู่ เนื่องจากเราต้องการอนุญาตให้การปรับใช้การผลิตเหล่านี้เสร็จสมบูรณ์
+การทำงานพร้อมกัน:
+กลุ่ม: "หน้า"
+ยกเลิก-ระหว่างดำเนินการ: เท็จ
+
+งาน:
+# งานสร้าง
+สร้าง:
+ทำงานบน: ubuntu-ล่าสุด
+ขั้นตอน:
+- ชื่อ: ตรวจสอบ
+ใช้: actions/checkout@v4
+- ชื่อ: ตั้งค่าหน้า
+ใช้: actions/configure-pages@v5
+- ชื่อ: สร้างด้วย Jekyll
+ใช้: actions/jekyll-build-pages@v1
+with:
+source: ./
+          destination: ./_site
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
